@@ -131,7 +131,7 @@ void rs_vector_update_remove(rs_vector *v, double item)
     double delta, delta_n, delta_nsq, term1;
 
     double n1 = (double)v->count;
-    double n = --v->count;
+    double n = (double)--v->count;
     delta = item - v->mean;
     delta_n = delta / n;
     delta_nsq = delta_n * delta_n;
