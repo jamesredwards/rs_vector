@@ -33,7 +33,7 @@ void rs_vector_free(rs_vector *v)
 void rs_vector_reset(rs_vector *v)
 {
     //zero everything out
-    memset(v, 0, v->count * sizeof(double));
+    memset(v->data, 0, v->count * sizeof(double));
     v->mean = 0.0;
     v->M2 = 0.0;
     v->M3 = 0.0;
