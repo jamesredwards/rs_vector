@@ -30,6 +30,19 @@ void rs_vector_free(rs_vector *v)
     }
 }
 
+void rs_vector_reset(rs_vector *v)
+{
+    //zero everything out
+    memset(v, 0, v->count * sizeof(double));
+    v->mean = 0.0;
+    v->M2 = 0.0;
+    v->M3 = 0.0;
+    v->M4 = 0.0;
+    v->sum = 0.0;
+    v->min = 0.0;
+    v->max = 0.0;
+}
+
 int rs_vector_resize(rs_vector *v, size_t new_size)
 {
     v->capacity = new_size;
@@ -60,6 +73,22 @@ double rs_vector_item_pop(rs_vector *v)
     if (v->count == (v->capacity / CAPACITY_INCREASE_FACTOR) - 1) {
         rs_vector_contract(v);
     }
+    return item;
+}
+
+double rs_vector_item_pop_index(rs_vector *v, size_t index)
+{
+    double item = v->data[index];
+    v->data[index] = 0.0;
+    //v->count--; will be (de)incremented in update
+    rs_vector_update_remove(v, item);
+    
+    //TODO work out logic for contracting if popped from
+    //start of array
+    /*if (v->count == (v->capacity / CAPACITY_INCREASE_FACTOR) - 1)
+    {
+        rs_vector_contract(v);
+    }*/
     return item;
 }
 
@@ -141,6 +170,94 @@ void rs_vector_update_remove(rs_vector *v, double item)
     v->M3 -= term1 * delta_n * (n1 - 2.0) - 3.0 * delta_n * v->M2;
     v->M4 -= term1 * delta_nsq * (n1 * n1 - 3.0 * n1 + 3.0) +
              6.0 * delta_nsq * v->M2 - 4.0 * delta_n * v->M3;
+}
+
+rs_rolling *rs_rolling_alloc(rs_vector *v, size_t window)
+{
+    rs_rolling *r = malloc(sizeof(rs_rolling));
+    if (!r)
+    {
+        fprintf(stderr, "[rs_rolling_alloc] malloc error\n");
+        return NULL;
+    }
+    else 
+    {
+        r->v = v;
+        r->window = window;
+        r->data = rs_vector_alloc(1);
+        r->mins = rs_vector_alloc(1);
+        r->maxs = rs_vector_alloc(1);
+        r->sums = rs_vector_alloc(1);
+        r->means = rs_vector_alloc(1);
+        r->variances = rs_vector_alloc(1);
+        r->stddevs = rs_vector_alloc(1);
+        r->skews = rs_vector_alloc(1);
+        r->kurts = rs_vector_alloc(1);
+
+        if (!r->data || !r->mins || !r->maxs || !r->sums || !r->means ||
+            !r->variances || !r->stddevs || !r->skews || !r->kurts)
+            {
+                fprintf(stderr, "[rs_rolling_alloc] malloc error\n");
+                exit(1);
+            }
+    }
+    return r;
+}
+void rs_rolling_roll(rs_rolling *r, size_t start_index)
+{
+    if (r)
+    {
+        //initial calc to push data onto r->data
+        for (size_t i = start_index; i < r->window; i++)
+        {
+            rs_vector_item_push(r->data, rs_vector_get(r->v, i));
+        }
+        rs_vector_item_push(r->sums, rs_vector_sum(r->v));
+        rs_vector_item_push(r->mins, rs_vector_min(r->v));
+        rs_vector_item_push(r->maxs, rs_vector_max(r->v));
+        rs_vector_item_push(r->means, rs_vector_mean(r->v));
+        rs_vector_item_push(r->variances, rs_vector_variance(r->v));
+        rs_vector_item_push(r->stddevs, rs_vector_stddev(r->v));
+        rs_vector_item_push(r->skews, rs_vector_skewness(r->v));
+        rs_vector_item_push(r->kurts, rs_vector_kurtosis(r->v));
+
+        //now roll baby, roll
+        for (size_t i = r->window; i < r->v->count; i++)
+        {
+            rs_vector_item_pop_index(r->data, i - r->window);
+            rs_vector_item_push(r->data, rs_vector_get(r->v, i));
+            rs_vector_item_push(r->sums, rs_vector_sum(r->data));
+            rs_vector_item_push(r->mins, rs_vector_min(r->data));
+            rs_vector_item_push(r->maxs, rs_vector_max(r->data));
+            rs_vector_item_push(r->means, rs_vector_mean(r->data));
+            rs_vector_item_push(r->variances, rs_vector_variance(r->data));
+            rs_vector_item_push(r->stddevs, rs_vector_stddev(r->data));
+            rs_vector_item_push(r->skews, rs_vector_skewness(r->data));
+            rs_vector_item_push(r->kurts, rs_vector_kurtosis(r->data));
+        }
+    }
+}
+
+void rs_rolling_free(rs_rolling *r)
+{
+    if (r)
+    {
+        if (r->data)
+        {
+            free(r->data);
+            r->data = NULL;
+        }
+        if (r->mins) free(r->mins);
+        if (r->maxs) free(r->maxs);
+        if (r->sums) free(r->sums);
+        if (r->means) free(r->means);
+        if (r->variances) free(r->variances);
+        if (r->stddevs) free(r->stddevs);
+        if (r->skews) free(r->skews);
+        if (r->kurts) free(r->kurts);
+        free(r);
+        r = NULL;
+    }
 }
 
 int main(int argc, char *argv[])

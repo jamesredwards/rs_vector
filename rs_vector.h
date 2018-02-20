@@ -3,11 +3,13 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <stdbool.h>
 
 #define CAPACITY_INCREASE_FACTOR 2
 
 typedef struct rs_vector {
+    bool calc;
+    size_t last_calc_index;
     double min;
     double max;
     double sum;
@@ -20,16 +22,41 @@ typedef struct rs_vector {
     double *data;
 } rs_vector;
 
+typedef struct rs_rolling {
+    size_t window;
+    size_t count;
+    rs_vector *v;
+    rs_vector *data;
+    rs_vector *mins;
+    rs_vector *maxs;
+    rs_vector *sums;
+    rs_vector *means;
+    rs_vector *variances;
+    rs_vector *stddevs;
+    rs_vector *skews;
+    rs_vector *kurts;
+} rs_rolling;
+
 rs_vector *rs_vector_alloc(size_t init_capacity);
+rs_vector *rs_vector_alloc_calculate(double *data, size_t length);
 void rs_vector_free(rs_vector *v);
-rs_vector *rs_vector_reset(rs_vector *v);
+void rs_vector_reset(rs_vector *v);
 int rs_vector_resize(rs_vector *v, size_t new_size);
 int rs_vector_expand(rs_vector *v);
 int rs_vector_contract(rs_vector *v);
 int rs_vector_item_push(rs_vector *v, double item);
 double rs_vector_item_pop(rs_vector *v);
+double rs_vector_item_pop_index(rs_vector *v, size_t index);
 void rs_vector_update(rs_vector *v, double item);
 void rs_vector_update_remove(rs_vector *v, double item);
+void calculate(rs_vector *v);
+
+rs_rolling *rs_rolling_alloc(rs_vector *v, size_t window);
+void rs_rolling_free(rs_rolling *r);
+void rs_rolling_roll(rs_rolling *r, size_t start_index);
+
+
+
 
 inline double rs_vector_min(rs_vector *v)
 {
