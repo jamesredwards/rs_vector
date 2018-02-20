@@ -53,3 +53,5 @@ dkms.conf
 
 # jamesredwards
 rs_vector
+.DS_Store
+.gitignore
