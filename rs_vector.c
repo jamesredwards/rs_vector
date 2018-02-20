@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <gsl/gsl_rng.h>
 #include "rs_vector.h"
 
 rs_vector *rs_vector_alloc(size_t init_capacity)
@@ -122,43 +123,56 @@ void rs_vector_update(rs_vector *v, double item)
     v->M2 += term1;
 }
 
-/* TODO - works for mean and variance but not 3rd/4th moments */
+/* need to use n+1 after decrement in term1, M3/M4 */
+/* TODO algo to update min/max                     */
 void rs_vector_update_remove(rs_vector *v, double item)
 {
     v->sum -= item;
-    double delta, delta_n, delta_n2, term1;
+    double delta, delta_n, delta_nsq, term1;
 
     double n1 = (double)v->count;
     double n = --v->count;
     delta = item - v->mean;
     delta_n = delta / n;
-    delta_n2 = delta_n * delta_n;
+    delta_nsq = delta_n * delta_n;
     term1 = delta * delta_n * n1;
     v->mean -= delta_n;
-    v->M4 -= term1 * delta_n2 * (n * n - 3.0 * n + 3.0) + 6.0 * delta_n2 * v->M2 - 4.0 * delta_n * v->M3;
-    v->M3 -= term1 * delta_n * (n - 2.0) - 3.0 * delta_n * v->M2;
     v->M2 -= term1;
+    v->M3 -= term1 * delta_n * (n1 - 2.0) - 3.0 * delta_n * v->M2;
+    v->M4 -= term1 * delta_nsq * (n1 * n1 - 3.0 * n1 + 3.0) +
+             6.0 * delta_nsq * v->M2 - 4.0 * delta_n * v->M3;
 }
 
 int main(int argc, char *argv[])
 {
-    rs_vector *v = rs_vector_alloc(1);
+    if (argc == 2) {
+        //Test numeric stability with gsl random uniform
+        rs_vector *v = rs_vector_alloc(1);
 
-    size_t size = strtoul(argv[1], NULL, 0);
+        const gsl_rng_type *T;
+        gsl_rng *r;
 
-    for (size_t i = 0; i < size; i++) {
-        rs_vector_item_push(v, i+0.0);
-        printf("%.6f;%.6f;%.6f;%.6f\n", rs_vector_mean(v), rs_vector_variance(v), rs_vector_skewness(v), rs_vector_kurtosis(v));
+        size_t n_vars = strtoul(argv[1], NULL, 0);
+
+        gsl_rng_env_setup();
+
+        T = gsl_rng_default;
+        r = gsl_rng_alloc(T);
+
+        for (size_t i = 0; i < n_vars; i++)
+        {
+            double u = gsl_rng_uniform(r);
+            rs_vector_item_push(v, u);
+        }
+
+        rs_vector_print_stats(v);
+
+        gsl_rng_free(r);
+
+        rs_vector_free(v);
     }
-
-    printf("\n\n");
-
-    for (size_t i = 0; i < size; i++)
-    {
-        printf("%.6f;%.6f;%.6f;%.6f\n", rs_vector_mean(v), rs_vector_variance(v), rs_vector_skewness(v), rs_vector_kurtosis(v));
-        rs_vector_item_pop(v);
+    else {
+        fprintf(stderr, "Please supply a number between 1 and 1,000,000,000\n");
+        exit(1);
     }
-
-    rs_vector_free(v);
-
 }

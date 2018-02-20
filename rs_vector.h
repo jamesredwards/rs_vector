@@ -1,8 +1,6 @@
 #ifndef __RS_VECTOR_H_
 #define __RS_VECTOR_H_
 
-#include <gsl/gsl_rstat.h>
-#include <gsl/gsl_vector.h>
 #include <math.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -73,7 +71,7 @@ void rs_vector_print_stats(rs_vector *v);
 static inline double rs_vector_get(rs_vector *v, size_t index)
 {
     if (index > v->count - 1) {
-        fprintf(stderr, "[rs_vector_get] index %zu out of range %zu", index, v->count);
+        fprintf(stderr, "[rs_vector_get] index %zu out of range %zu\n", index, v->count);
         return 0.0;
     }
     return v->data[index];
