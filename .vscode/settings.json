@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "gsl_rng.h": "c",
+        "rs_rolling.h": "c",
+        "rs_vector.h": "c"
+    }
+}
