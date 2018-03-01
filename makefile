@@ -1,8 +1,8 @@
 TARGET=rs_vector
 OBJECTS=$(patsubst %.c, %.o, $(SOURCES))
 SOURCES=$(wildcard *.c)
-CFLAGS=-g -Wall -Wextra -O3 
-LDLIBS=-lm -lgsl -lgslcblas
+CFLAGS=-g -Wall -Wextra -Ofast 
+LDLIBS=#-lm -lgsl -lgslcblas
 CC=gcc
 
 $(TARGET) : $(OBJECTS)

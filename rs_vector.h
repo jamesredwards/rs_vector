@@ -34,7 +34,16 @@ int rs_vector_item_push(rs_vector *v, double item);
 double rs_vector_item_pop(rs_vector *v);
 void rs_vector_update(rs_vector *v, double item);
 void rs_vector_update_remove(rs_vector *v, double item);
-void calculate(rs_vector *v);
+
+void rs_vector_add(rs_vector *left, rs_vector *right);
+void rs_vector_sub(rs_vector *left, rs_vector *right);
+void rs_vector_mul(rs_vector *left, rs_vector *right);
+void rs_vector_div(rs_vector *left, rs_vector *right);
+double rs_vector_dot(rs_vector *left, rs_vector *right);
+
+void rs_vector_calculate(rs_vector *v);
+
+rs_vector *rs_vector_copy(rs_vector *src);
 
 inline double rs_vector_min(rs_vector *v) { return v->min; }
 inline double rs_vector_max(rs_vector *v) { return v->max; }

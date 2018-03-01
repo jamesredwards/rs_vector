@@ -1,7 +1,5 @@
-#include <gsl/gsl_rng.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include "circular_array.h"
 #include "rs_rolling.h"
 #include "rs_vector.h"
@@ -61,9 +59,6 @@ int rs_vector_resize(rs_vector *v, size_t new_size) {
 
 int rs_vector_item_push(rs_vector *v, double item) {
 
-        /*fprintf(stderr, 
-                "[rs_vector_item_push] count: %zu, current cap: %zu\n", 
-                v->count, v->capacity);*/
         static size_t func_call = 0;
 
         if (v->count == v->capacity - 1) {
@@ -168,24 +163,85 @@ void rs_vector_update_remove(rs_vector *v, double item) {
                  6.0 * delta_nsq * v->M2 - 4.0 * delta_n * v->M3;
 }
 
+void rs_vector_add(rs_vector *left, rs_vector *right)
+{
+        for (size_t i = 0; i < left->count; i++) {
+                double ai = rs_vector_get(left, i);
+                double bi = rs_vector_get(right, i);
+                left->data[i] = ai + bi;
+        }
+}
+
+void rs_vector_sub(rs_vector *left, rs_vector *right)
+{
+        for (size_t i = 0; i < left->count; i++) {
+                double ai = rs_vector_get(left, i);
+                double bi = rs_vector_get(right, i);
+                left->data[i] = ai - bi;
+        }
+}
+void rs_vector_mul(rs_vector *left, rs_vector *right)
+{
+        for (size_t i = 0; i < left->count; i++) {
+                double ai = rs_vector_get(left, i);
+                double bi = rs_vector_get(right, i);
+                left->data[i] = ai * bi;
+        }
+}
+void rs_vector_div(rs_vector *left, rs_vector *right)
+{
+        for (size_t i = 0; i < left->count; i++) {
+                double ai = rs_vector_get(left, i);
+                double bi = rs_vector_get(right, i);
+                left->data[i] = ai / bi;
+        }
+}
+double rs_vector_dot(rs_vector *left, rs_vector *right)
+{
+        double sum = 0.0;
+
+        for (size_t i = 0; i < left->count; i++) {
+                double ai = rs_vector_get(left, i);
+                double bi = rs_vector_get(right, i);
+                sum += ai * bi;
+        }
+        return sum;
+}
+
+
 int main(int argc, char *argv[]) {
 
         if (argc > 1) {
                 size_t n_vars = strtoul(argv[1], NULL, 0);
-                size_t window = strtoul(argv[2], NULL, 0);
+                //size_t window = strtoul(argv[2], NULL, 0);
 
                 
-                rs_vector *v = rs_vector_alloc(1);
+                rs_vector *a = rs_vector_alloc(1);
+                rs_vector *b = rs_vector_alloc(1);
 
                 for (size_t i = 0; i < n_vars; i++) {
-                        rs_vector_item_push(v, (double)i+1);
+                        rs_vector_item_push(a, (double)i+1);
+                        rs_vector_item_push(b, (double)n_vars-i);
                 }
+                rs_vector_print(a);
+                rs_vector_print(b);
+                rs_vector_add(a, b);
+                rs_vector_print(a);
+                rs_vector_sub(a, b);
+                rs_vector_print(a);
+                rs_vector_mul(a, b);
+                rs_vector_print(a);
+                rs_vector_div(a, b);
+                rs_vector_print(a);
+                double d = rs_vector_dot(a, b);
+                fprintf(stdout, "Dot product: %.2f\n", d);
                 //rs_vector_print(v);
-                rs_rolling *r = rs_rolling_alloc(v, window);
+                /*rs_rolling *r = rs_rolling_alloc(v, window);
                 rs_rolling_roll(r, 0);
                 rs_rolling_print(r);
 
-                rs_rolling_free(r);
-                rs_vector_free(v);
+                rs_rolling_free(r);*/
+                rs_vector_free(a);
+                rs_vector_free(b);
         }
 }

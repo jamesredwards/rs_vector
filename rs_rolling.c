@@ -91,14 +91,12 @@ void rs_rolling_free(rs_rolling *r) {
 
 void rs_rolling_print(rs_rolling *r) {
         if (r) {
-                fprintf(stdout, "Sum;Min;Max;Mean;Variance;Stddev;Skew;Kurt\n");
+                fprintf(stdout, "Sum;Mean;Variance;Stddev;Skew;Kurt\n");
 
                 for (size_t i = 0; i < r->count; i++) {
                         fprintf(stdout,
-                                "%.6f;%.6f;%.6f;%.6f;%.6f;%.6f;%.6f;%.6f\n",
+                                "%.6f;%.6f;%.6f;%.6f;%.6f;%.6f\n",
                                 rs_vector_get(r->sums, i),
-                                rs_vector_get(r->mins, i),
-                                rs_vector_get(r->maxs, i),
                                 rs_vector_get(r->means, i),
                                 rs_vector_get(r->variances, i),
                                 rs_vector_get(r->stddevs, i),
