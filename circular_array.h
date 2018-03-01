@@ -34,6 +34,7 @@ bool circular_array_is_empty(circular_array *ca);
 bool circular_array_is_full(circular_array *ca);
 void circular_array_update_stats_put(circular_array *ca, double item);
 void circular_array_update_stats_pop(circular_array *ca, double item);
+void circular_array_print(circular_array *ca);
 
 inline double circular_array_min(circular_array *ca) { return ca->min; }
 inline double circular_array_max(circular_array *ca) { return ca->max; }

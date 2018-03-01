@@ -12,6 +12,7 @@ circular_array *circular_array_alloc(size_t size) {
         }
         ca->size = size;
         ca->data = malloc(sizeof(double) * ca->size);
+        circular_array_reset(ca);
         return ca;
 }
 
@@ -118,4 +119,13 @@ void circular_array_update_stats_pop(circular_array *ca, double item)
         ca->M3 -= term1 * delta_n * (n1 - 2.0) - 3.0 * delta_n * ca->M2;
         ca->M4 -= term1 * delta_nsq * (n1 * n1 - 3.0 * n1 + 3.0) +
                  6.0 * delta_nsq * ca->M2 - 4.0 * delta_n * ca->M3;
+}
+
+void circular_array_print(circular_array *ca)
+{
+        fprintf(stdout, "circular_array [%.2f, ", ca->data[0]);
+        for (size_t i = 1; i < ca->size - 1; i++) {
+                fprintf(stdout, "%.2f, ", ca->data[i]);
+        }
+        fprintf(stdout, "%.2f]\n", ca->data[ca->size-1]);
 }

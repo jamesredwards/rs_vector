@@ -30,11 +30,13 @@ rs_rolling *rs_rolling_alloc(rs_vector *v, size_t window) {
 }
 
 void rs_rolling_roll(rs_rolling *r, size_t start_index) {
-        if (r) {
 
+        if (r) {
+                
                 for (size_t i = start_index; i < (start_index + r->window); i++) {
                         circular_array_put(r->window_data, rs_vector_get(r->source_data, i));
                 }
+
                 rs_vector_item_push(r->sums, circular_array_sum(r->window_data));
                 rs_vector_item_push(r->mins, circular_array_min(r->window_data));
                 rs_vector_item_push(r->maxs, circular_array_max(r->window_data));
@@ -43,17 +45,18 @@ void rs_rolling_roll(rs_rolling *r, size_t start_index) {
                 rs_vector_item_push(r->stddevs, circular_array_stddev(r->window_data));
                 rs_vector_item_push(r->skews, circular_array_skewness(r->window_data));
                 rs_vector_item_push(r->kurts, circular_array_kurtosis(r->window_data));
-                r->count++;
+                r->count = r->sums->count;
+
 
                 // now roll baby, roll
                 size_t count = r->source_data->count;
-                // fprintf(stderr, "r->v->count: %zu\n", count);
 
                 double tmp = 0.0;
 
                 for (size_t i = (start_index + r->window); i < count; i++) {
                         circular_array_get(r->window_data, &tmp);
                         circular_array_put(r->window_data, rs_vector_get(r->source_data, i));
+
                         rs_vector_item_push(r->sums, circular_array_sum(r->window_data));
                         rs_vector_item_push(r->mins, circular_array_min(r->window_data));
                         rs_vector_item_push(r->maxs, circular_array_max(r->window_data));
@@ -62,12 +65,8 @@ void rs_rolling_roll(rs_rolling *r, size_t start_index) {
                         rs_vector_item_push(r->stddevs, circular_array_stddev(r->window_data));
                         rs_vector_item_push(r->skews, circular_array_skewness(r->window_data));
                         rs_vector_item_push(r->kurts, circular_array_kurtosis(r->window_data));
-                        r->count++;
+                        r->count = r->sums->count;
                 }
-                fprintf(stderr,
-                        "r->v->count %zu r->window_data->count %zu r->count %zu "
-                        "r->sums->count %zu\n",
-                        r->source_data->count, r->window_data->size, r->count, r->sums->count);
         }
 }
 
@@ -76,14 +75,14 @@ void rs_rolling_free(rs_rolling *r) {
                 if (r->window_data) {
                         circular_array_free(r->window_data);
                 }
-                if (r->mins) free(r->mins);
-                if (r->maxs) free(r->maxs);
-                if (r->sums) free(r->sums);
-                if (r->means) free(r->means);
-                if (r->variances) free(r->variances);
-                if (r->stddevs) free(r->stddevs);
-                if (r->skews) free(r->skews);
-                if (r->kurts) free(r->kurts);
+                if (r->mins) rs_vector_free(r->mins);
+                if (r->maxs) rs_vector_free(r->maxs);
+                if (r->sums) rs_vector_free(r->sums);
+                if (r->means) rs_vector_free(r->means);
+                if (r->variances) rs_vector_free(r->variances);
+                if (r->stddevs) rs_vector_free(r->stddevs);
+                if (r->skews) rs_vector_free(r->skews);
+                if (r->kurts) rs_vector_free(r->kurts);
                 // if (r->v) rs_vector_free(r->v);
                 free(r);
                 r = NULL;

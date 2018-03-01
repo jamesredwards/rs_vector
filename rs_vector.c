@@ -1,9 +1,10 @@
-#include "rs_vector.h"
 #include <gsl/gsl_rng.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include "circular_array.h"
 #include "rs_rolling.h"
+#include "rs_vector.h"
 
 rs_vector *rs_vector_alloc(size_t init_capacity) {
         if (init_capacity == 0) {
@@ -14,8 +15,9 @@ rs_vector *rs_vector_alloc(size_t init_capacity) {
                 fprintf(stderr, "[rs_vector_alloc] malloc error\n");
                 return NULL;
         }
-        v->capacity = init_capacity;
+        v->capacity = init_capacity + 1;
         v->data = malloc(sizeof(double) * v->capacity);
+        rs_vector_reset(v);
         return v;
 }
 
@@ -32,7 +34,8 @@ void rs_vector_free(rs_vector *v) {
 
 void rs_vector_reset(rs_vector *v) {
         // zero everything out
-        memset(v->data, 0, v->count * sizeof(double));
+        memset(v->data, 0, v->capacity * sizeof(double));
+        v->count = 0;
         v->mean = 0.0;
         v->M2 = 0.0;
         v->M3 = 0.0;
@@ -43,8 +46,10 @@ void rs_vector_reset(rs_vector *v) {
 }
 
 int rs_vector_resize(rs_vector *v, size_t new_size) {
-        // fprintf(stderr, "v->count %zu, v->capacity %zu, new_size %zu\n",
-        // v->count, v->capacity, new_size);
+
+        static size_t call_ctr = 0;
+        call_ctr++;
+        
         v->capacity = new_size;
         double *data = realloc(v->data, v->capacity * sizeof(double));
         if (data) {
@@ -55,11 +60,18 @@ int rs_vector_resize(rs_vector *v, size_t new_size) {
 }
 
 int rs_vector_item_push(rs_vector *v, double item) {
+
+        /*fprintf(stderr, 
+                "[rs_vector_item_push] count: %zu, current cap: %zu\n", 
+                v->count, v->capacity);*/
+        static size_t func_call = 0;
+
         if (v->count == v->capacity - 1) {
+                func_call++;
                 rs_vector_expand(v);
         }
-        rs_vector_update(v, item);
         v->data[v->count] = item;
+        rs_vector_update(v, item);
         return 0;
 }
 
@@ -74,27 +86,16 @@ double rs_vector_item_pop(rs_vector *v) {
         return item;
 }
 
-double rs_vector_item_pop_index(rs_vector *v, size_t index) {
-        double item = v->data[index];
-        v->data[index] = 0.0;
-        // v->count--; will be (de)incremented in update
-        rs_vector_update_remove(v, item);
-
-        // TODO work out logic for contracting if popped from
-        // start of array
-        if (v->count == (v->capacity / CAPACITY_INCREASE_FACTOR) - 1) {
-                rs_vector_contract(v);
-        }
-        return item;
-}
-
 int rs_vector_expand(rs_vector *v) {
+
         size_t new_size = v->capacity * CAPACITY_INCREASE_FACTOR;
         int rc = rs_vector_resize(v, new_size);
+
         return rc;
 }
 
 int rs_vector_contract(rs_vector *v) {
+
         size_t new_size = v->capacity / CAPACITY_INCREASE_FACTOR;
         int rc = rs_vector_resize(v, new_size);
         return rc;
@@ -110,6 +111,15 @@ void rs_vector_print_stats(rs_vector *v) {
         printf("Std dev  : %7.6f\n", rs_vector_stddev(v));
         printf("Skewness : %7.6f\n", rs_vector_skewness(v));
         printf("Kurtosis : %7.6f\n", rs_vector_kurtosis(v));
+}
+
+void rs_vector_print(rs_vector *v)
+{
+        fprintf(stdout, "rs_vector [%.2f, ", rs_vector_get(v, 0));
+        for (size_t i = 1; i < v->count - 1; i++) {
+                fprintf(stdout, "%.2f, ", rs_vector_get(v, i));
+        }
+        fprintf(stdout, "%.2f]\n", rs_vector_get(v, v->count - 1));
 }
 
 void rs_vector_update(rs_vector *v, double item) {
@@ -159,55 +169,23 @@ void rs_vector_update_remove(rs_vector *v, double item) {
 }
 
 int main(int argc, char *argv[]) {
-        /*if (argc == 2) {
-            //Test numeric stability with gsl random uniform
-            rs_vector *v = rs_vector_alloc(1);
-
-            const gsl_rng_type *T;
-            gsl_rng *r;
-
-            size_t n_vars = strtoul(argv[1], NULL, 0);
-
-            gsl_rng_env_setup();
-
-            T = gsl_rng_default;
-            r = gsl_rng_alloc(T);
-
-            for (size_t i = 0; i < n_vars; i++)
-            {
-                double u = gsl_rng_uniform(r);
-                rs_vector_item_push(v, u);
-            }
-
-            rs_vector_print_stats(v);
-
-            gsl_rng_free(r);
-
-            rs_vector_free(v);
-        }
-        else {
-            fprintf(stderr, "Please supply a number between 1 and
-        1,000,000,000\n"); exit(1);
-        }*/
 
         if (argc > 1) {
                 size_t n_vars = strtoul(argv[1], NULL, 0);
                 size_t window = strtoul(argv[2], NULL, 0);
-                rs_vector *v = rs_vector_alloc(n_vars);
 
-                for (size_t i = 5; i < n_vars + 5; i++) {
-                        rs_vector_item_push(v, (double)i);
+                
+                rs_vector *v = rs_vector_alloc(1);
+
+                for (size_t i = 0; i < n_vars; i++) {
+                        rs_vector_item_push(v, (double)i+1);
                 }
-
-                // fprintf(stderr, "rs_vector set up correctly\n");
-
+                //rs_vector_print(v);
                 rs_rolling *r = rs_rolling_alloc(v, window);
                 rs_rolling_roll(r, 0);
                 rs_rolling_print(r);
 
                 rs_rolling_free(r);
                 rs_vector_free(v);
-                // printf("%zu\n", sizeof(double));
-                // printf("%zu\n", sizeof(rs_vector));
         }
 }

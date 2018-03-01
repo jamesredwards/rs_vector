@@ -1,11 +1,11 @@
-P=rs_vector
+TARGET=rs_vector
 OBJECTS=$(patsubst %.c, %.o, $(SOURCES))
 SOURCES=$(wildcard *.c)
-CFLAGS=-g -Wall -Wextra -O3
+CFLAGS=-g -Wall -Wextra -O3 
 LDLIBS=-lm -lgsl -lgslcblas
 CC=gcc
 
-$(P) : $(OBJECTS)
+$(TARGET) : $(OBJECTS)
 
 clean:
 	rm -f *.o

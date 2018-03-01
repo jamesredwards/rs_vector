@@ -32,7 +32,6 @@ int rs_vector_expand(rs_vector *v);
 int rs_vector_contract(rs_vector *v);
 int rs_vector_item_push(rs_vector *v, double item);
 double rs_vector_item_pop(rs_vector *v);
-double rs_vector_item_pop_index(rs_vector *v, size_t index);
 void rs_vector_update(rs_vector *v, double item);
 void rs_vector_update_remove(rs_vector *v, double item);
 void calculate(rs_vector *v);
@@ -57,6 +56,8 @@ inline double rs_vector_kurtosis(rs_vector *v) {
 }
 
 void rs_vector_print_stats(rs_vector *v);
+
+void rs_vector_print(rs_vector *v);
 
 static inline double rs_vector_get(rs_vector *v, size_t index) {
         if (index > v->count - 1) {
