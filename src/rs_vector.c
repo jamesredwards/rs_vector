@@ -1,8 +1,8 @@
+#include "rs_vector.h"
 #include <stdio.h>
 #include <string.h>
 #include "circular_array.h"
 #include "rs_rolling.h"
-#include "rs_vector.h"
 
 rs_vector *rs_vector_alloc(size_t init_capacity) {
         if (init_capacity == 0) {
@@ -44,10 +44,9 @@ void rs_vector_reset(rs_vector *v) {
 }
 
 int rs_vector_resize(rs_vector *v, size_t new_size) {
-
         static size_t call_ctr = 0;
         call_ctr++;
-        
+
         v->capacity = new_size;
         double *data = realloc(v->data, v->capacity * sizeof(double));
         if (data) {
@@ -58,7 +57,6 @@ int rs_vector_resize(rs_vector *v, size_t new_size) {
 }
 
 int rs_vector_item_push(rs_vector *v, double item) {
-
         static size_t func_call = 0;
 
         if (v->count == v->capacity - 1) {
@@ -82,7 +80,6 @@ double rs_vector_item_pop(rs_vector *v) {
 }
 
 int rs_vector_expand(rs_vector *v) {
-
         size_t new_size = v->capacity * CAPACITY_INCREASE_FACTOR;
         int rc = rs_vector_resize(v, new_size);
 
@@ -90,7 +87,6 @@ int rs_vector_expand(rs_vector *v) {
 }
 
 int rs_vector_contract(rs_vector *v) {
-
         size_t new_size = v->capacity / CAPACITY_INCREASE_FACTOR;
         int rc = rs_vector_resize(v, new_size);
         return rc;
@@ -108,8 +104,7 @@ void rs_vector_print_stats(rs_vector *v) {
         printf("Kurtosis : %7.6f\n", rs_vector_kurtosis(v));
 }
 
-void rs_vector_print(rs_vector *v)
-{
+void rs_vector_print(rs_vector *v) {
         fprintf(stdout, "rs_vector [%.2f, ", rs_vector_get(v, 0));
         for (size_t i = 1; i < v->count - 1; i++) {
                 fprintf(stdout, "%.2f, ", rs_vector_get(v, i));
@@ -163,8 +158,7 @@ void rs_vector_update_remove(rs_vector *v, double item) {
                  6.0 * delta_nsq * v->M2 - 4.0 * delta_n * v->M3;
 }
 
-void rs_vector_add(rs_vector *left, rs_vector *right)
-{
+void rs_vector_add(rs_vector *left, rs_vector *right) {
         for (size_t i = 0; i < left->count; i++) {
                 double ai = rs_vector_get(left, i);
                 double bi = rs_vector_get(right, i);
@@ -172,32 +166,28 @@ void rs_vector_add(rs_vector *left, rs_vector *right)
         }
 }
 
-void rs_vector_sub(rs_vector *left, rs_vector *right)
-{
+void rs_vector_sub(rs_vector *left, rs_vector *right) {
         for (size_t i = 0; i < left->count; i++) {
                 double ai = rs_vector_get(left, i);
                 double bi = rs_vector_get(right, i);
                 left->data[i] = ai - bi;
         }
 }
-void rs_vector_mul(rs_vector *left, rs_vector *right)
-{
+void rs_vector_mul(rs_vector *left, rs_vector *right) {
         for (size_t i = 0; i < left->count; i++) {
                 double ai = rs_vector_get(left, i);
                 double bi = rs_vector_get(right, i);
                 left->data[i] = ai * bi;
         }
 }
-void rs_vector_div(rs_vector *left, rs_vector *right)
-{
+void rs_vector_div(rs_vector *left, rs_vector *right) {
         for (size_t i = 0; i < left->count; i++) {
                 double ai = rs_vector_get(left, i);
                 double bi = rs_vector_get(right, i);
                 left->data[i] = ai / bi;
         }
 }
-double rs_vector_dot(rs_vector *left, rs_vector *right)
-{
+double rs_vector_dot(rs_vector *left, rs_vector *right) {
         double sum = 0.0;
 
         for (size_t i = 0; i < left->count; i++) {
@@ -208,20 +198,17 @@ double rs_vector_dot(rs_vector *left, rs_vector *right)
         return sum;
 }
 
-
 int main(int argc, char *argv[]) {
-
         if (argc > 1) {
                 size_t n_vars = strtoul(argv[1], NULL, 0);
-                //size_t window = strtoul(argv[2], NULL, 0);
+                // size_t window = strtoul(argv[2], NULL, 0);
 
-                
                 rs_vector *a = rs_vector_alloc(1);
                 rs_vector *b = rs_vector_alloc(1);
 
                 for (size_t i = 0; i < n_vars; i++) {
-                        rs_vector_item_push(a, (double)i+1);
-                        rs_vector_item_push(b, (double)n_vars-i);
+                        rs_vector_item_push(a, (double)i + 1);
+                        rs_vector_item_push(b, (double)n_vars - i);
                 }
                 rs_vector_print(a);
                 rs_vector_print(b);
@@ -235,7 +222,7 @@ int main(int argc, char *argv[]) {
                 rs_vector_print(a);
                 double d = rs_vector_dot(a, b);
                 fprintf(stdout, "Dot product: %.2f\n", d);
-                //rs_vector_print(v);
+                // rs_vector_print(v);
                 /*rs_rolling *r = rs_rolling_alloc(v, window);
                 rs_rolling_roll(r, 0);
                 rs_rolling_print(r);

@@ -55,4 +55,4 @@ dkms.conf
 rs_vector
 .DS_Store
 *.gitignore
-.vscode
+*.vscode
